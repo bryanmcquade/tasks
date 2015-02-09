@@ -46,7 +46,7 @@ function init() {
   var authParams = ft.auth.getCurrentAuthParams();
   if (authParams.getError()) {
     // User refused to accept permissions.
-    console.log('Failed to get needed permissions: ' + err);
+    console.log('Failed to get needed permissions: ' + authParams.getError());
   } else if (!authParams.getAccessToken()) {
     // Redirect to the auth handler to get a valid access token.
     if (!ft.auth.maybeRedirectToAuthUrl()) {
