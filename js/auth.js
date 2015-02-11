@@ -42,14 +42,15 @@ ft.auth.getAuthUrl_ = function(opt_previousParams) {
       ft.settings.auth.BASE_URL, params);
 };
 
-ft.auth.maybeRedirectToAuthUrl = function() {
-  var params = ft.auth.getCurrentAuthParams();
-  if (params.getRedirectCount() > 2) {
-    ft.auth.clearAuthInfoInUrl();
+ft.auth.redirectToAuthUrl = function(authParams) {
+  if (authParams.getRedirectCount() > 2) {
+    // We've encountered too many redirects. To avoid going into an
+    // infinite redirect loop, abort without issuing a redirect.
     return false;
   }
-  var authUrl = ft.auth.getAuthUrl_(params);
+  var authUrl = ft.auth.getAuthUrl_(authParams);
   window.location.replace(authUrl);
+  return true;
 };
 
 ft.auth.clearAuthInfoInUrl = function() {

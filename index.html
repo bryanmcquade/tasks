@@ -1,8 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fast Tasks</title>
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+<style>
+body { padding-top: 15px; }
+</style>
 <script>
 // Disable fetching of deps.js. This is temporary until we generate
 // a proper deps.js file. When we do so, we should also remove the
@@ -17,52 +22,50 @@ CLOSURE_NO_DEPS = true;
 <script src="js/auth.js"></script>
 <script src="js/xhr.js"></script>
 <script src="js/taskapi.js"></script>
+<script src="js/application.js"></script>
+</head>
+<body>
+<div class="container-fluid">
+<div id="task-root" class="list-group">
+<span class="list-group-item active"><strong>Tasks</strong></span>
+</div>
+<a class="btn btn-default" href="#" role="button">Link</a>
+</div>
 <script>
-function onTasklist(taskList) {
-  // For now, just write the list of tasks to the console.
-  for (var i = 0; i < taskList.getNumItems(); ++i) {
-    var task = taskList.getItem(i);
-    console.log(task.getTitle());
-  }
-}
-
-function onTasklistError(err) {
+function onError(authParams, err) {
   if (err instanceof ft.taskapi.Error) {
     // We have a taskapi Error, so we can inspect its additional
     // properties, such as 'code', to learn more about the error.
     if (err.code === 401) {
       // Error code 401 indicates an auth failure, so attempt to reauthenticate.
-      if (!ft.auth.maybeRedirectToAuthUrl()) {
-        console.log('Failed to redirect to auth url. Redirect count exceeded?');
-        return;
-      }
+      ft.auth.redirectToAuthUrl(authParams);
     }
   }
-  // Not an error that we know how to handle, so re-throw it.
-  throw err;
 }
 
-function init() {
+(function() {
   var authParams = ft.auth.getCurrentAuthParams();
+  ft.auth.clearAuthInfoInUrl();
   if (authParams.getError()) {
-    // User refused to accept permissions.
-    console.log('Failed to get needed permissions: ' + authParams.getError());
-  } else if (!authParams.getAccessToken()) {
-    // Redirect to the auth handler to get a valid access token.
-    if (!ft.auth.maybeRedirectToAuthUrl()) {
-      console.log('Failed to redirect to auth url. Redirect count exceeded?');
+    if (authParams.getError() === 'access_denied') {
+      console.log('User did not grant needed permissions.');
+    } else {
+      console.log('Unknown auth error: ' + authParams.getError());
     }
-  } else {
-    ft.taskapi.createTasklistPromise(authParams.getAccessToken())
-        .then(onTasklist, onTasklistError)
-        .then(ft.auth.clearAuthInfoInUrl);
+    return;
   }
-}
+  if (!authParams.getAccessToken()) {
+    // No auth token available, so redirect to the auth handler
+    // to get a valid access token.
+    ft.auth.redirectToAuthUrl(authParams);
+    return;
+  }
 
-init();
+  var taskRootElt = document.getElementById('task-root');
+  var app = new ft.Application(taskRootElt);
+  app.start(authParams.getAccessToken())
+      .catch(goog.partial(onError, authParams));
+}());
 </script>
-</head>
-<body>
-Nothing to see here just yet...
 </body>
 </html>
