@@ -2,7 +2,9 @@ goog.provide('ft.Application');
 
 goog.require('ft.taskapi');
 
-ft.Application = function() {};
+ft.Application = function(taskRootElt) {
+  this.taskRootElt_ = taskRootElt;
+};
 
 ft.Application.prototype.start = function(accessToken) {
   return ft.taskapi.createTasklistPromise(accessToken)
@@ -10,9 +12,11 @@ ft.Application.prototype.start = function(accessToken) {
 };
 
 ft.Application.prototype.onTasklist_ = function(taskList) {
-  // For now, just write the list of tasks to the console.
   for (var i = 0; i < taskList.getNumItems(); ++i) {
     var task = taskList.getItem(i);
-    console.log(task.getTitle());
+    var itemElt = document.createElement('a');
+    itemElt.className = 'list-group-item';
+    itemElt.innerText = task.getTitle();
+    this.taskRootElt_.appendChild(itemElt);
   }
 };
